@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import { indexRoutes } from "./routes";
 
 const app = express();
 
@@ -10,6 +11,8 @@ app.use(
     credentials: true,
   }),
 );
+
+app.use("/api/v1", indexRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to NursingHome_Server!");
