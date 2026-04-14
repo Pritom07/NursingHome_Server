@@ -8,6 +8,8 @@ model Speciality{
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    doctorSpecialities DoctorSpeciality[]
+
     @@index([id])
     @@index([title])
     @@map("speciality")

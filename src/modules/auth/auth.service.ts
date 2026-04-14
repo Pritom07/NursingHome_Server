@@ -4,6 +4,14 @@ import { prisma } from "../../lib/prisma";
 import { IRegisterPatient, ISignIn } from "./auth.interface";
 
 const registerPatient = async (payLoad: IRegisterPatient) => {
+  const isExist = await prisma.user.findUnique({
+    where: { email: payLoad.email },
+  });
+
+  if (isExist) {
+    throw new Error("User already exists. Use another email");
+  }
+
   const createUser = await auth.api.signUpEmail({
     body: payLoad,
   });
