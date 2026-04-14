@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { IResponse } from "../interfaces/succesResponse";
+import { IResponse } from "../interfaces/succesResponse.interface";
 
 export const sendResponse = <T>(res: Response, responseData: IResponse<T>) => {
   const { httpStatusCode, success, message, data } = responseData;

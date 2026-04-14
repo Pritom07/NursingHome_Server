@@ -1,6 +1,6 @@
-import { UserRole, UserStatus } from "../../generated/prisma/enums";
+import { UserRole, UserStatus } from "../../../generated/prisma/enums";
 
-export interface ISignUp {
+export interface IRegisterPatient {
   id?: string;
   name: string;
   email: string;
@@ -12,5 +12,12 @@ export interface ISignUp {
   needPasswordChange?: boolean;
   isDeleted?: boolean;
   deletedAt?: Date;
+  callbackURL?: string;
+}
+
+export interface ISignIn {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
   callbackURL?: string;
 }

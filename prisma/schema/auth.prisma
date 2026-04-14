@@ -11,6 +11,8 @@ model User {
   deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  patient       Patient?
   sessions      Session[]
   accounts      Account[]
 

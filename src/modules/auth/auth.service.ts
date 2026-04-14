@@ -1,15 +1,58 @@
 import { UserStatus } from "../../../generated/prisma/enums";
-import { ISignIn } from "../../interfaces/signInUser";
-import { ISignUp } from "../../interfaces/signUpUser";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
+import { IRegisterPatient, ISignIn } from "./auth.interface";
 
-const signUp = async (payLoad: ISignUp) => {
-  const res = await auth.api.signUpEmail({
+const registerPatient = async (payLoad: IRegisterPatient) => {
+  const createUser = await auth.api.signUpEmail({
     body: payLoad,
   });
 
-  return res;
+  if (!createUser.user) {
+    throw new Error("User Creation Failed");
+  }
+
+  try {
+    const res = await prisma.$transaction(async (tx) => {
+      await tx.patient.create({
+        data: {
+          user_id: createUser.user.id,
+          name: createUser.user.name,
+          email: createUser.user.email,
+        },
+      });
+
+      const result = await tx.user.findUnique({
+        where: { id: createUser.user.id },
+        include: {
+          patient: {
+            select: {
+              id: true,
+              user_id: true,
+              contactNumber: true,
+              address: true,
+              isDeleted: true,
+              deletedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+
+      return result;
+    });
+
+    return res;
+  } catch (err: any) {
+    await prisma.user.delete({
+      where: {
+        email: createUser.user.email,
+      },
+    });
+    console.log(err);
+    throw err;
+  }
 };
 
 const signIn = async (payLoad: ISignIn) => {
@@ -39,4 +82,4 @@ const signIn = async (payLoad: ISignIn) => {
   return res;
 };
 
-export const authService = { signUp, signIn };
+export const authService = { registerPatient, signIn };
