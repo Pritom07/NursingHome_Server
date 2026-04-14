@@ -7,7 +7,7 @@ const router = Router();
 
 router.use("/auth", authRoute);
 
-router.use("/user", userRoute);
+router.use("/auth/user", userRoute);
 
 router.use("/specialities", specialityRoute);
 
