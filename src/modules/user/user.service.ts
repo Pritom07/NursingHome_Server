@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import status from "http-status";
 import { Speciality, UserRole } from "../../../generated/prisma/client";
+import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { ICreateDoctor } from "./user.interface";
@@ -9,7 +12,7 @@ const createDoctor = async (payLoad: ICreateDoctor) => {
   });
 
   if (isExist) {
-    throw new Error("Doctor already exist");
+    throw new AppError(status.CONFLICT, "Doctor already exist");
   }
 
   const specialities: Speciality[] = [];
@@ -20,7 +23,10 @@ const createDoctor = async (payLoad: ICreateDoctor) => {
     });
 
     if (!isSpecialityExist) {
-      throw new Error("Speciality Not Exist");
+      throw new AppError(
+        status.NOT_FOUND,
+        `Speciality Not Found For Id : ${speciality}`,
+      );
     }
     specialities.push(isSpecialityExist);
   }
@@ -36,7 +42,7 @@ const createDoctor = async (payLoad: ICreateDoctor) => {
   });
 
   if (!createUser.user) {
-    throw new Error("Doctor Register failed");
+    throw new AppError(status.INTERNAL_SERVER_ERROR, "Registration failed");
   }
 
   try {
@@ -103,7 +109,10 @@ const createDoctor = async (payLoad: ICreateDoctor) => {
     await prisma.user.delete({
       where: { id: createUser.user.id },
     });
-    throw err;
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Doctor Registration Failed",
+    );
   }
 };
 

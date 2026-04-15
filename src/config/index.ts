@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
 import path from "path";
 import { IEnvConfig } from "../interfaces/envConfig.interface";
+import AppError from "../errorHelpers/AppError";
+import status from "http-status";
 
 dotenv.config({ path: path.join(process.cwd(), ".env") });
 
@@ -15,7 +17,10 @@ const loadEnvVars = (): IEnvConfig => {
 
   requiredEnvVars.forEach((value) => {
     if (!process.env[value]) {
-      throw new Error(`${process.env[value]} is required but not in .env file`);
+      throw new AppError(
+        status.NOT_FOUND,
+        `${process.env[value]} is required but not in .env file`,
+      );
     }
   });
 

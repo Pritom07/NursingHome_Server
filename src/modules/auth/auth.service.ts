@@ -1,4 +1,7 @@
+/*eslint-disable @typescript-eslint/no-unused-vars */
+import status from "http-status";
 import { UserStatus } from "../../../generated/prisma/enums";
+import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { IRegisterPatient, ISignIn } from "./auth.interface";
@@ -9,7 +12,10 @@ const registerPatient = async (payLoad: IRegisterPatient) => {
   });
 
   if (isExist) {
-    throw new Error("User already exists. Use another email");
+    throw new AppError(
+      status.CONFLICT,
+      "User already exists. Use another email",
+    );
   }
 
   const createUser = await auth.api.signUpEmail({
@@ -17,7 +23,7 @@ const registerPatient = async (payLoad: IRegisterPatient) => {
   });
 
   if (!createUser.user) {
-    throw new Error("User Creation Failed");
+    throw new AppError(status.INTERNAL_SERVER_ERROR, "Registration Failed");
   }
 
   try {
@@ -58,8 +64,10 @@ const registerPatient = async (payLoad: IRegisterPatient) => {
         email: createUser.user.email,
       },
     });
-    console.log(err);
-    throw err;
+    throw new AppError(
+      status.INTERNAL_SERVER_ERROR,
+      "Patient Registration Failed",
+    );
   }
 };
 
@@ -69,18 +77,18 @@ const signIn = async (payLoad: ISignIn) => {
   });
 
   if (!isExist) {
-    throw new Error("User Not Exist");
+    throw new AppError(status.NOT_FOUND, "User Not Found");
   }
 
   if (isExist && isExist.status === UserStatus.BLOCK) {
-    throw new Error("User is BLOCKED");
+    throw new AppError(status.FORBIDDEN, "User is BLOCKED");
   }
 
   if (
     isExist &&
     (isExist.isDeleted === true || isExist.status === UserStatus.DELETED)
   ) {
-    throw new Error("User is DELETED");
+    throw new AppError(status.GONE, "User is DELETED");
   }
 
   const res = await auth.api.signInEmail({
