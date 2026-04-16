@@ -5,6 +5,7 @@ import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { IRegisterPatient, ISignIn } from "./auth.interface";
+import { tokenUtils } from "../../utils/token";
 
 const registerPatient = async (payLoad: IRegisterPatient) => {
   const isExist = await prisma.user.findUnique({
@@ -28,7 +29,7 @@ const registerPatient = async (payLoad: IRegisterPatient) => {
 
   try {
     const res = await prisma.$transaction(async (tx) => {
-      await tx.patient.create({
+      const patientData = await tx.patient.create({
         data: {
           user_id: createUser.user.id,
           name: createUser.user.name,
@@ -36,25 +37,31 @@ const registerPatient = async (payLoad: IRegisterPatient) => {
         },
       });
 
-      const result = await tx.user.findUnique({
-        where: { id: createUser.user.id },
-        include: {
-          patient: {
-            select: {
-              id: true,
-              user_id: true,
-              contactNumber: true,
-              address: true,
-              isDeleted: true,
-              deletedAt: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          },
-        },
+      const result = await tx.patient.findUnique({
+        where: { id: patientData.id },
       });
 
-      return result;
+      const accessToken = tokenUtils.getAccessToken({
+        userId: createUser.user.id,
+        name: createUser.user.name,
+        email: createUser.user.email,
+        emailVerified: createUser.user.emailVerified,
+        role: createUser.user.role,
+        status: createUser.user.status,
+        isDeleted: createUser.user.isDeleted,
+      });
+
+      const refreshToken = tokenUtils.getRefreshToken({
+        userId: createUser.user.id,
+        name: createUser.user.name,
+        email: createUser.user.email,
+        emailVerified: createUser.user.emailVerified,
+        role: createUser.user.role,
+        status: createUser.user.status,
+        isDeleted: createUser.user.isDeleted,
+      });
+
+      return { accessToken, refreshToken, ...result, ...createUser };
     });
 
     return res;
@@ -95,7 +102,27 @@ const signIn = async (payLoad: ISignIn) => {
     body: payLoad,
   });
 
-  return res;
+  const accessToken = tokenUtils.getAccessToken({
+    userId: res.user.id,
+    name: res.user.name,
+    email: res.user.email,
+    emailVerified: res.user.emailVerified,
+    role: res.user.role,
+    status: res.user.status,
+    isDeleted: res.user.isDeleted,
+  });
+
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: res.user.id,
+    name: res.user.name,
+    email: res.user.email,
+    emailVerified: res.user.emailVerified,
+    role: res.user.role,
+    status: res.user.status,
+    isDeleted: res.user.isDeleted,
+  });
+
+  return { accessToken, refreshToken, ...res };
 };
 
 export const authService = { registerPatient, signIn };
