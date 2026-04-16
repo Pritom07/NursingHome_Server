@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { indexRoutes } from "./routes";
 import { notFound } from "./middlewares/notFound";
 import { globalErrorHandler } from "./middlewares/globalErrorHandler";
@@ -9,10 +10,11 @@ const app = express();
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5000"],
+    origin: ["http://localhost:5000", "http://localhost:3000"],
     credentials: true,
   }),
 );
+app.use(cookieParser());
 
 app.use("/api/v1", indexRoutes);
 
