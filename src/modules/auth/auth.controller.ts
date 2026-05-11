@@ -5,6 +5,7 @@ import { authService } from "./auth.service";
 import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
+import { cookieUtils } from "../../utils/cookie";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payLoad = req.body;
@@ -40,4 +41,34 @@ const signIn = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const authController = { registerPatient, signIn };
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const payLoad = req.user;
+  const result = await authService.getMe(payLoad);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Getting Personal Information Successfully",
+    data: result,
+  });
+});
+
+const getNewTokens = catchAsync(async (req: Request, res: Response) => {
+  const refreshtoken = cookieUtils.getCookie(req, "refreshToken");
+  const sessionToken = cookieUtils.getCookie(req, "better-auth.session_token");
+  const result = await authService.getNewTokens(refreshtoken, sessionToken);
+  const { accessToken, refreshToken, token } = result;
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
+  tokenUtils.setBetterAuthSessionCookie(res, token);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Getting New Tokens Successfully",
+    data: result,
+  });
+});
+
+export const authController = { registerPatient, signIn, getMe, getNewTokens };

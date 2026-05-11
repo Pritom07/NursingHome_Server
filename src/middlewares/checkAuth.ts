@@ -8,19 +8,12 @@ import { prisma } from "../lib/prisma";
 import { jwtUtils } from "../utils/jwt";
 import { config } from "../config";
 import { JwtPayload } from "jsonwebtoken";
+import { IRequestUser } from "../interfaces/requestUser.interface";
 
 declare global {
   namespace Express {
     interface Request {
-      user: {
-        userId: string;
-        name: string;
-        email: string;
-        emailVerified: boolean;
-        role: UserRole;
-        status: UserStatus;
-        isDeleted: boolean;
-      };
+      user: IRequestUser;
     }
   }
 }
@@ -115,7 +108,7 @@ const checkAuth = (...role: UserRole[]) => {
 
       const decodedToken = jwtUtils.decodeToken(accessToken) as JwtPayload;
 
-      if (role.length && !role.includes(decodedToken.data?.role as UserRole)) {
+      if (role.length && !role.includes(decodedToken?.role as UserRole)) {
         throw new AppError(
           status.FORBIDDEN,
           "Forbidden ! You're Not Allowed For This Action",
