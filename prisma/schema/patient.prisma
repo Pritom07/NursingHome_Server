@@ -14,6 +14,12 @@ model Patient{
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    appointments Appointment[]
+    prescriptions Prescription[]
+    reviews Review[]
+    patientHealthData PatientHealthData?
+    medicalReports MedicalReport[]
+
     @@index([user_id])
     @@index([email])
     @@map("patient")

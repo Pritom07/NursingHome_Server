@@ -22,6 +22,10 @@ model Doctor{
     updatedAt DateTime @updatedAt
 
     specialities DoctorSpeciality[]
+    doctorSchedules DoctorSchedule[]
+    appointments Appointment[]
+    prescriptions Prescription[]
+    reviews Review[]
 
     @@index([user_id])
     @@index([email])

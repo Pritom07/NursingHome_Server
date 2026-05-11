@@ -1,0 +1,15 @@
+model MedicalReport{
+    id String @id @default(uuid())
+
+    patient Patient @relation(fields: [patient_id],references: [id],onDelete: Cascade,onUpdate: Cascade)
+    patient_id String
+
+    reportName String
+    reportLink String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([patient_id])
+    @@map("medicalReport")
+}

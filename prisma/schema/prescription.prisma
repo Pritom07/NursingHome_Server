@@ -1,0 +1,23 @@
+model Prescription{
+    id String @id @default(uuid())
+
+    appointment Appointment @relation(fields: [appointment_id],references: [id],onDelete: Cascade,onUpdate: Cascade)
+    appointment_id String @unique
+
+    doctor Doctor @relation(fields: [doctor_id],references: [id],onDelete: Cascade,onUpdate: Cascade)
+    doctor_id String
+
+    patient Patient @relation(fields: [patient_id],references: [id],onDelete: Cascade,onUpdate: Cascade)
+    patient_id String
+
+    instructions String
+    followUpDate DateTime
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([appointment_id])
+    @@index([doctor_id])
+    @@index([patient_id])
+    @@map("prescription")
+}
