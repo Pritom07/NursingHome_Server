@@ -5,6 +5,8 @@ import { UserRole, UserStatus } from "../../generated/prisma/enums";
 import { bearer, emailOTP } from "better-auth/plugins";
 import sendEmail from "../utils/email";
 import { config } from "../config";
+import AppError from "../errorHelpers/AppError";
+import status from "http-status";
 
 export const auth = betterAuth({
   baseURL: config.BETTER_AUTH_URL,
@@ -41,7 +43,7 @@ export const auth = betterAuth({
 
           if (!isUserExist) {
             console.log(
-              `user with email ; ${email} is not found. can't send otp`,
+              `User with email : ${email} is not found. can't send otp`,
             );
             return;
           }
@@ -56,7 +58,7 @@ export const auth = betterAuth({
           if (isUserExist && !isUserExist.emailVerified) {
             sendEmail({
               to: email,
-              subject: "Verify Your Email",
+              subject: "Email Verification OTP",
               templateName: "otp",
               templateData: {
                 name: isUserExist.name,
@@ -64,6 +66,26 @@ export const auth = betterAuth({
               },
             });
           }
+        } else if (type === "forget-password") {
+          const isUserExist = await prisma.user.findUnique({
+            where: {
+              email,
+            },
+          });
+
+          if (!isUserExist) {
+            throw new AppError(status.NOT_FOUND, "User_Not_Found");
+          }
+
+          sendEmail({
+            to: email,
+            subject: "Password Reset OTP",
+            templateName: "passwordResetOtp",
+            templateData: {
+              name: isUserExist.name,
+              otp,
+            },
+          });
         }
       },
       expiresIn: 60 * 2 /**2 min */,

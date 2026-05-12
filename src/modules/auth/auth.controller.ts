@@ -113,6 +113,28 @@ const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const forgetPassword = catchAsync(async (req: Request, res: Response) => {
+  const payLoad = req.body;
+  await authService.forgetPassword(payLoad);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Password Reset OTP Send To Email",
+  });
+});
+
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const payLoad = req.body;
+  await authService.resetPassword(payLoad);
+
+  sendResponse(res, {
+    httpStatusCode: status.OK,
+    success: true,
+    message: "Password Reset Successfull",
+  });
+});
+
 export const authController = {
   registerPatient,
   signIn,
@@ -121,4 +143,6 @@ export const authController = {
   changePassword,
   logOut,
   verifyEmail,
+  forgetPassword,
+  resetPassword,
 };

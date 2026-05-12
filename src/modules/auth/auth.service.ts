@@ -7,6 +7,7 @@ import { prisma } from "../../lib/prisma";
 import {
   IChangePassword,
   IRegisterPatient,
+  IResetPassword,
   ISignIn,
   IVerifyEmail,
 } from "./auth.interface";
@@ -335,6 +336,123 @@ const verifyEmail = async (payLoad: IVerifyEmail) => {
   return result;
 };
 
+const forgetPassword = async (payLoad: { email: string }) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email: payLoad.email,
+    },
+  });
+
+  if (!isUserExist) {
+    throw new AppError(status.NOT_FOUND, "User_Not_Found");
+  }
+
+  if (!isUserExist.emailVerified) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  if (
+    isUserExist.status === UserStatus.BLOCK ||
+    isUserExist.status === UserStatus.DELETED
+  ) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  if (isUserExist.isDeleted) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  const isAccountExist = await prisma.account.findFirst({
+    where: {
+      userId: isUserExist.id,
+    },
+  });
+
+  if (!isAccountExist) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  if (isAccountExist.providerId === "google") {
+    console.log(
+      `User with email : ${payLoad.email} logged in through Google. So, skip this part.`,
+    );
+    return;
+  }
+
+  await auth.api.requestPasswordResetEmailOTP({
+    body: { email: payLoad.email },
+  });
+};
+
+const resetPassword = async (payLoad: IResetPassword) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      email: payLoad.email,
+    },
+  });
+
+  if (!isUserExist) {
+    throw new AppError(status.NOT_FOUND, "User_Not_Found");
+  }
+
+  if (!isUserExist.emailVerified) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  if (
+    isUserExist.status === UserStatus.BLOCK ||
+    isUserExist.status === UserStatus.DELETED
+  ) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  if (isUserExist.isDeleted) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  const isAccountExist = await prisma.account.findFirst({
+    where: {
+      userId: isUserExist.id,
+    },
+  });
+
+  if (!isAccountExist) {
+    throw new AppError(status.UNAUTHORIZED, "Unauthorized_Access");
+  }
+
+  if (isAccountExist.providerId === "google") {
+    console.log(
+      `User with email : ${payLoad.email} logged in through Google. So, skip this part.`,
+    );
+    return;
+  }
+
+  await auth.api.resetPasswordEmailOTP({
+    body: {
+      email: payLoad.email,
+      otp: payLoad.otp,
+      password: payLoad.newPassword,
+    },
+  });
+
+  await prisma.session.deleteMany({
+    where: {
+      userId: isUserExist.id,
+    },
+  });
+
+  if (isUserExist && isUserExist.needPasswordChange) {
+    await prisma.user.update({
+      where: {
+        id: isUserExist.id,
+      },
+      data: {
+        needPasswordChange: false,
+      },
+    });
+  }
+};
+
 export const authService = {
   registerPatient,
   signIn,
@@ -343,4 +461,6 @@ export const authService = {
   changePassword,
   logOut,
   verifyEmail,
+  forgetPassword,
+  resetPassword,
 };
