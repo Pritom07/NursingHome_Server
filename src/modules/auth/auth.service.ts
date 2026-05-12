@@ -4,7 +4,12 @@ import { UserStatus } from "../../../generated/prisma/enums";
 import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
-import { IChangePassword, IRegisterPatient, ISignIn } from "./auth.interface";
+import {
+  IChangePassword,
+  IRegisterPatient,
+  ISignIn,
+  IVerifyEmail,
+} from "./auth.interface";
 import { tokenUtils } from "../../utils/token";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
 import { jwtUtils } from "../../utils/jwt";
@@ -240,7 +245,10 @@ const changePassword = async (
   });
 
   if (isAccountExist?.providerId === "google") {
-    throw new AppError(status.BAD_REQUEST, "Skipping This part");
+    throw new AppError(
+      status.BAD_REQUEST,
+      "Skipping_This_Step_For_Google_Login_Users",
+    );
   }
 
   const res = await auth.api.changePassword({
@@ -310,6 +318,23 @@ const logOut = async (sessionToken: string) => {
   return result;
 };
 
+const verifyEmail = async (payLoad: IVerifyEmail) => {
+  const result = await auth.api.verifyEmailOTP({
+    body: { ...payLoad },
+  });
+
+  if (result && !result.user.emailVerified) {
+    await prisma.user.update({
+      where: {
+        email: payLoad.email,
+      },
+      data: { emailVerified: true },
+    });
+  }
+
+  return result;
+};
+
 export const authService = {
   registerPatient,
   signIn,
@@ -317,4 +342,5 @@ export const authService = {
   getNewTokens,
   changePassword,
   logOut,
+  verifyEmail,
 };

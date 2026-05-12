@@ -2,23 +2,74 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { UserRole, UserStatus } from "../../generated/prisma/enums";
-import { bearer } from "better-auth/plugins";
+import { bearer, emailOTP } from "better-auth/plugins";
+import sendEmail from "../utils/email";
+import { config } from "../config";
 
 export const auth = betterAuth({
+  baseURL: config.BETTER_AUTH_URL,
+  secret: config.BETTER_AUTH_SECRET,
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
 
+  trustedOrigins: [
+    config.BETTER_AUTH_URL || "http://localhost:5000",
+    "http://localhost:3000",
+  ],
+
   session: {
-    expiresIn: 60 * 60 * 24 * 60,
-    updateAge: 60 * 60 * 24 * 60,
+    expiresIn: 60 * 60 * 24 * 60 /**60 days */,
+    updateAge: 60 * 60 * 24 * 60 /**60 days */,
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 60 * 24 * 60,
+      maxAge: 60 * 60 * 24 * 60 /**60 days */,
     },
   },
 
-  plugins: [bearer()],
+  plugins: [
+    bearer(),
+    emailOTP({
+      overrideDefaultEmailVerification: true,
+      async sendVerificationOTP({ email, otp, type }) {
+        if (type === "email-verification") {
+          const isUserExist = await prisma.user.findUnique({
+            where: {
+              email,
+            },
+          });
+
+          if (!isUserExist) {
+            console.log(
+              `user with email ; ${email} is not found. can't send otp`,
+            );
+            return;
+          }
+
+          if (isUserExist && isUserExist.role === UserRole.SUPER_ADMIN) {
+            console.log(
+              `User with email : ${email} is a super_admin. Skipping sending verification otp`,
+            );
+            return;
+          }
+
+          if (isUserExist && !isUserExist.emailVerified) {
+            sendEmail({
+              to: email,
+              subject: "Verify Your Email",
+              templateName: "otp",
+              templateData: {
+                name: isUserExist.name,
+                otp,
+              },
+            });
+          }
+        }
+      },
+      expiresIn: 60 * 2 /**2 min */,
+      otpLength: 6,
+    }),
+  ],
 
   user: {
     additionalFields: {
@@ -52,5 +103,35 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
+    requireEmailVerification: true,
+  },
+
+  emailVerification: {
+    sendOnSignIn: true,
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+  },
+
+  advanced: {
+    useSecureCookies: false,
+    cookies: {
+      state: {
+        attributes: {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          path: "/",
+        },
+      },
+      sessionToken: {
+        attributes: {
+          httpOnly: true,
+          secure: true,
+          sameSite: "none",
+          path: "/",
+        },
+      },
+    },
   },
 });
