@@ -4,7 +4,7 @@ import { UserStatus } from "../../../generated/prisma/enums";
 import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
-import { IRegisterPatient, ISignIn } from "./auth.interface";
+import { IChangePassword, IRegisterPatient, ISignIn } from "./auth.interface";
 import { tokenUtils } from "../../utils/token";
 import { IRequestUser } from "../../interfaces/requestUser.interface";
 import { jwtUtils } from "../../utils/jwt";
@@ -219,4 +219,102 @@ const getNewTokens = async (refreshToken: string, sessionToken: string) => {
   };
 };
 
-export const authService = { registerPatient, signIn, getMe, getNewTokens };
+const changePassword = async (
+  payLoad: IChangePassword,
+  sessionToken: string,
+) => {
+  const isUserExist = await auth.api.getSession({
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  if (!isUserExist) {
+    throw new AppError(status.NOT_FOUND, "User_Not_Found");
+  }
+
+  const isAccountExist = await prisma.account.findFirst({
+    where: {
+      userId: isUserExist.user.id,
+    },
+  });
+
+  if (isAccountExist?.providerId === "google") {
+    throw new AppError(status.BAD_REQUEST, "Skipping This part");
+  }
+
+  const res = await auth.api.changePassword({
+    body: { ...payLoad, revokeOtherSessions: true },
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  if (isUserExist.user.needPasswordChange) {
+    await prisma.user.update({
+      where: {
+        id: isUserExist.user.id,
+      },
+      data: {
+        needPasswordChange: false,
+      },
+    });
+  }
+
+  await prisma.session.deleteMany({
+    where: {
+      token: sessionToken,
+    },
+  });
+
+  const accessToken = tokenUtils.getAccessToken({
+    userId: isUserExist.user.id,
+    name: isUserExist.user.name,
+    email: isUserExist.user.email,
+    emailVerified: isUserExist.user.emailVerified,
+    role: isUserExist.user.role,
+    status: isUserExist.user.status,
+    isDeleted: isUserExist.user.isDeleted,
+  });
+
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: isUserExist.user.id,
+    name: isUserExist.user.name,
+    email: isUserExist.user.email,
+    emailVerified: isUserExist.user.emailVerified,
+    role: isUserExist.user.role,
+    status: isUserExist.user.status,
+    isDeleted: isUserExist.user.isDeleted,
+  });
+
+  return { accessToken, refreshToken, ...res };
+};
+
+const logOut = async (sessionToken: string) => {
+  const isUserExist = await auth.api.getSession({
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  if (!isUserExist) {
+    throw new AppError(status.NOT_FOUND, "User_Not_Found");
+  }
+
+  const result = await auth.api.signOut({
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  return result;
+};
+
+export const authService = {
+  registerPatient,
+  signIn,
+  getMe,
+  getNewTokens,
+  changePassword,
+  logOut,
+};

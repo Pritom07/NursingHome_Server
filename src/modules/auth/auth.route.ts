@@ -22,4 +22,17 @@ router.get(
 
 router.post("/refresh-token", authController.getNewTokens);
 
+router.post(
+  "/change-password",
+  checkAuth(
+    UserRole.DOCTOR,
+    UserRole.PATIENT,
+    UserRole.ADMIN,
+    UserRole.SUPER_ADMIN,
+  ),
+  authController.changePassword,
+);
+
+router.post("/logout", authController.logOut);
+
 export const authRoute = router;

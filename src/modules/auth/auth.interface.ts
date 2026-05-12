@@ -21,3 +21,8 @@ export interface ISignIn {
   rememberMe?: boolean;
   callbackURL?: string;
 }
+
+export interface IChangePassword {
+  currentPassword: string;
+  newPassword: string;
+}
