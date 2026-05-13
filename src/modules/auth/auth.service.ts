@@ -453,6 +453,46 @@ const resetPassword = async (payLoad: IResetPassword) => {
   }
 };
 
+const googleLoginSuccess = async (session: Record<string, any>) => {
+  const isPatientExist = await prisma.patient.findUnique({
+    where: {
+      user_id: session.user.id,
+    },
+  });
+
+  if (!isPatientExist) {
+    await prisma.patient.create({
+      data: {
+        user_id: session?.user.id,
+        name: session?.user.name,
+        email: session?.user.email,
+      },
+    });
+  }
+
+  const accessToken = tokenUtils.getAccessToken({
+    userId: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    emailVerified: session.user.emailVerified,
+    role: session.user.role,
+    status: session.user.status,
+    isDeleted: session.user.isDeleted,
+  });
+
+  const refreshToken = tokenUtils.getRefreshToken({
+    userId: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    emailVerified: session.user.emailVerified,
+    role: session.user.role,
+    status: session.user.status,
+    isDeleted: session.user.isDeleted,
+  });
+
+  return { accessToken, refreshToken };
+};
+
 export const authService = {
   registerPatient,
   signIn,
@@ -463,4 +503,5 @@ export const authService = {
   verifyEmail,
   forgetPassword,
   resetPassword,
+  googleLoginSuccess,
 };

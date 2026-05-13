@@ -41,4 +41,10 @@ router.post("/forget-password", authController.forgetPassword);
 
 router.post("/reset-password", authController.resetPassword);
 
+router.get("/sign-in/google", authController.googleLogin);
+
+router.get("/google/success", authController.googleLoginSuccess);
+
+router.get("/oauth/error", authController.handleOauthError);
+
 export const authRoute = router;

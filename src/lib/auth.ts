@@ -135,6 +135,23 @@ export const auth = betterAuth({
     autoSignInAfterVerification: true,
   },
 
+  socialProviders: {
+    google: {
+      clientId: config.GOOGLE_CLIENT_ID,
+      clientSecret: config.GOOGLE_CLIENT_SECRET,
+      mapProfileToUser: () => {
+        return {
+          role: UserRole.PATIENT,
+          status: UserStatus.ACTIVE,
+          needPasswordChange: false,
+          emailVerified: true,
+          isDeleted: false,
+          deletedAt: null,
+        };
+      },
+    },
+  },
+
   advanced: {
     useSecureCookies: false,
     cookies: {
