@@ -13,5 +13,6 @@ model DoctorSpeciality{
     @@index([id])
     @@index([doctor_id])
     @@index([speciality_id])
+    @@unique([doctor_id,speciality_id])
     @@map("doctorSpeciality")
 }

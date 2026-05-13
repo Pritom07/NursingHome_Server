@@ -4,7 +4,7 @@ import { Speciality, UserRole } from "../../../generated/prisma/client";
 import AppError from "../../errorHelpers/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
-import { ICreateDoctor } from "./user.interface";
+import { ICreateAdmin, ICreateDoctor } from "./user.interface";
 
 const createDoctor = async (payLoad: ICreateDoctor) => {
   const isExist = await prisma.user.findUnique({
@@ -116,4 +116,78 @@ const createDoctor = async (payLoad: ICreateDoctor) => {
   }
 };
 
-export const userService = { createDoctor };
+const createAdmin = async (payLoad: ICreateAdmin, sessionToken: string) => {
+  const session = await auth.api.getSession({
+    headers: new Headers({
+      Authorization: `Bearer ${sessionToken}`,
+    }),
+  });
+
+  if (
+    session?.user.role === UserRole.ADMIN &&
+    payLoad.role === UserRole.SUPER_ADMIN
+  ) {
+    throw new AppError(status.FORBIDDEN, "You're Not Allowed For This Action");
+  }
+
+  const isAdminExist = await prisma.user.findUnique({
+    where: {
+      email: payLoad.admin.email,
+    },
+  });
+
+  if (isAdminExist) {
+    throw new AppError(status.CONFLICT, "User Already Exist");
+  }
+
+  const createUser = await auth.api.signUpEmail({
+    body: {
+      name: payLoad.admin.name,
+      email: payLoad.admin.email,
+      password: payLoad.password,
+      role: payLoad.role,
+      needPasswordChange: true,
+    },
+  });
+
+  try {
+    const adminData = await prisma.admin.create({
+      data: {
+        user_id: createUser.user.id,
+        name: payLoad.admin.name,
+        email: payLoad.admin.email,
+        profilePhoto: payLoad.admin.profilePhoto ?? null,
+        contactNumber: payLoad.admin.contactNumber ?? null,
+        address: payLoad.admin.address,
+        gender: payLoad.admin.gender,
+        deletedAt: payLoad.admin.deletedAt ?? null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            emailVerified: true,
+            role: true,
+            status: true,
+            needPasswordChange: true,
+            isDeleted: true,
+            deletedAt: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    return adminData;
+  } catch (err: any) {
+    await prisma.user.delete({
+      where: {
+        id: createUser.user.id,
+      },
+    });
+    console.log(err.message);
+  }
+};
+
+export const userService = { createDoctor, createAdmin };

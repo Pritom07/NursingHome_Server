@@ -1,4 +1,4 @@
-import { Gender } from "../../../generated/prisma/enums";
+import { Gender, UserRole } from "../../../generated/prisma/enums";
 
 export interface ICreateDoctor {
   password: string;
@@ -18,4 +18,18 @@ export interface ICreateDoctor {
     deletedAt?: Date;
   };
   specialities: string[];
+}
+
+export interface ICreateAdmin {
+  password: string;
+  admin: {
+    name: string;
+    email: string;
+    profilePhoto?: string;
+    contactNumber?: string;
+    address: string;
+    gender: Gender;
+    deletedAt?: Date;
+  };
+  role: UserRole;
 }
