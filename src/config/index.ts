@@ -23,6 +23,9 @@ const loadEnvVars = (): IEnvConfig => {
     "EMAIL_SENDER_SMTP_FROM",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
+    "CLOUDINARY_CLOUD_NAME",
+    "CLOUDINARY_API_KEY",
+    "CLOUDINARY_API_SECRET",
   ];
 
   requiredEnvVars.forEach((value) => {
@@ -50,6 +53,9 @@ const loadEnvVars = (): IEnvConfig => {
     EMAIL_SENDER_SMTP_FROM: process.env.EMAIL_SENDER_SMTP_FROM as string,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME as string,
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET as string,
   };
 };
 

@@ -9,8 +9,9 @@ import {
 } from "../interfaces/errResponse.interface";
 import { handleZodError } from "../errorHelpers/handleZodError";
 import AppError from "../errorHelpers/AppError";
+import { deleteFileFromCloudinary } from "../config/cloudinary.config";
 
-export const globalErrorHandler = (
+export const globalErrorHandler = async (
   err: any,
   req: Request,
   res: Response,
@@ -18,6 +19,17 @@ export const globalErrorHandler = (
 ) => {
   if (config.NODE_ENV === "development") {
     console.log(err);
+  }
+
+  if (req.file) {
+    return await deleteFileFromCloudinary(req.file?.path);
+  }
+
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    const imageURLs = req.files.map((file) => file?.path);
+    return await Promise.all(
+      imageURLs.map((url) => deleteFileFromCloudinary(url)),
+    );
   }
 
   let httpStatusCode: number = status.INTERNAL_SERVER_ERROR;
