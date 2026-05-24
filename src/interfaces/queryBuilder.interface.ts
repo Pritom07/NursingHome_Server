@@ -34,7 +34,7 @@ export interface IQueryParams {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   fields?: string;
-  includes?: string;
+  include?: string;
   [key: string]: string | unknown;
 }
 
@@ -74,4 +74,14 @@ export interface PrismaWhereCondition {
   AND?: Record<string, unknown>[];
   NOT?: Record<string, unknown>[];
   [key: string]: unknown;
+}
+
+export interface IQueryResult<T> {
+  data?: T[];
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
