@@ -6,7 +6,8 @@ import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
-  const result = await doctorService.getAllDoctors();
+  const query = req.query;
+  const result = await doctorService.getAllDoctors(query);
 
   sendResponse(res, {
     httpStatusCode: status.OK,

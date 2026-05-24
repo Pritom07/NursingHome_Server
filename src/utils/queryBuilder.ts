@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   IQueryConfig,
   IQueryParams,
@@ -281,7 +280,7 @@ export class queryBuilder<
   }
 
   sort(): this {
-    const sortBy = this.queryParams.sortBy as string;
+    const sortBy = (this.queryParams.sortBy as string) || "createdAt";
     const sortOrder = this.queryParams.sortOrder === "asc" ? "asc" : "desc";
 
     this.sortBy = sortBy;
@@ -491,6 +490,8 @@ export class queryBuilder<
     if (Array.isArray(value) && value.length > 0) {
       return { in: value.map((item) => this.parseFilterValue(item)) };
     }
+
+    return value;
   }
 
   private parseRangeFilter(
