@@ -17,4 +17,6 @@ export interface IEnvConfig {
   CLOUDINARY_CLOUD_NAME: string;
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
+  SUPER_ADMIN_EMAIL: string;
+  SUPER_ADMIN_PASS: string;
 }

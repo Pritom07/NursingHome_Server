@@ -26,6 +26,8 @@ const loadEnvVars = (): IEnvConfig => {
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
     "CLOUDINARY_API_SECRET",
+    "SUPER_ADMIN_EMAIL",
+    "SUPER_ADMIN_PASS",
   ];
 
   requiredEnvVars.forEach((value) => {
@@ -56,6 +58,8 @@ const loadEnvVars = (): IEnvConfig => {
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME as string,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY as string,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET as string,
+    SUPER_ADMIN_EMAIL: process.env.SUPER_ADMIN_EMAIL as string,
+    SUPER_ADMIN_PASS: process.env.SUPER_ADMIN_PASS as string,
   };
 };
 
